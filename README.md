@@ -287,3 +287,11 @@ No code changes required.
 - **Real IAM module** — extend `apply_terraform_iam` to a second real Terraform module (IAM roles + policies). Demonstrates multi-module saga ordering with real cleanup.
 - **Real AWS account provisioning** — replace the simulated 18s heartbeat loop in `provision_aws_account` with an actual `organizations:CreateAccount` call. This is the textbook async-long-running AWS API use case for Temporal (creation is async and takes 5-15 min).
 - **Dedicated teardown workflow** — a `LandingZoneTeardownWorkflow` that reuses the compensation activities for explicit team decommissioning (approval-gated, multi-day grace periods, etc.). Today the shell script `07_cleanup.sh` handles this with `terraform destroy` — fine for operational hygiene, but a workflow is the right fit for the enterprise "sunset a team" use case.
+
+## Development
+
+I built this project with Claude as an AI pair-programming assistant. Claude helped with brainstorming, code suggestions, refactoring, and documentation, while I directed the work, reviewed the outputs, and made the final implementation decisions.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details
