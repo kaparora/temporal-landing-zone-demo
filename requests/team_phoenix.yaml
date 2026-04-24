@@ -1,0 +1,12 @@
+# Sample onboarding request — FinCo's new "Phoenix" product team.
+# Tier: regulated (touches customer financial data → security approval required).
+name: team-phoenix
+tier: regulated
+modules:
+  - networking
+  - iam
+  - github
+  - jira
+  - observability
+owner_email: phoenix-lead@finco.example.com
+cost_center: CC-4521

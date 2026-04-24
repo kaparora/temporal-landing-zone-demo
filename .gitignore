@@ -1,0 +1,35 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+terraform/networking/outputs/
+
+# Local runtime / logs
+*.log
+
+# Internal planning doc — not published
+SCOPE.md
+
+# Claude Code / AI tooling
+.claude/
+CLAUDE.md
+.mcp.json
+AGENTS.md

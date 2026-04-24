@@ -1,0 +1,24 @@
+# Temporal connection + runtime settings for the landing-zone demo.
+#
+# Defaults point at a local `temporal server start-dev` instance.
+# To target Temporal Cloud, set:
+#   temporal.address: <namespace>.<accountId>.tmprl.cloud:7233
+#   temporal.namespace: <namespace>.<accountId>
+#   temporal.tls.enabled: true
+#   temporal.api_key: "<your-api-key>"        # or use env var TEMPORAL_API_KEY
+# Any field here can be overridden by an env var of the same dotted path
+# upper-cased with underscores, e.g. TEMPORAL_ADDRESS, TEMPORAL_NAMESPACE.
+
+temporal:
+  address: "localhost:7233"
+  namespace: "default"
+  task_queue: "landing-zone-task-queue"
+  tls:
+    enabled: false
+  api_key: null
+
+terraform:
+  # Path (relative to repo root) to the TF module applied by activity 4.
+  networking_module: "terraform/networking"
+  # Binary to invoke; overridden by env TERRAFORM_BIN for CI.
+  binary: "terraform"
