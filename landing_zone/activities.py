@@ -140,12 +140,16 @@ async def apply_terraform_networking(request: TeamRequest) -> TerraformResult:
 
 @activity.defn
 async def apply_terraform_iam(request: TeamRequest) -> None:
+    activity.heartbeat("applying IAM/SSO module")
+    await asyncio.sleep(3)
     activity.logger.info("Applied IAM/SSO module for team '%s'", request.name)
 
 
 @activity.defn
 async def create_github_repo(request: TeamRequest) -> RepoResult:
     maybe_inject_failure(request.scenario, "create_github_repo")
+    activity.heartbeat("calling GitHub API")
+    await asyncio.sleep(2)
     result = RepoResult(url=f"https://github.com/finco/{request.name}")
     activity.logger.info("Created GitHub repo: %s", result.url)
     return result
@@ -153,6 +157,8 @@ async def create_github_repo(request: TeamRequest) -> RepoResult:
 
 @activity.defn
 async def create_jira_project(request: TeamRequest) -> JiraProjectResult:
+    activity.heartbeat("calling Jira API")
+    await asyncio.sleep(2)
     key = request.name.upper().replace("-", "")[:6]
     result = JiraProjectResult(key=key)
     activity.logger.info("Created Jira project: %s", result.key)
@@ -161,11 +167,15 @@ async def create_jira_project(request: TeamRequest) -> JiraProjectResult:
 
 @activity.defn
 async def bootstrap_observability(request: TeamRequest) -> None:
+    activity.heartbeat("configuring Datadog + CloudWatch")
+    await asyncio.sleep(3)
     activity.logger.info("Datadog + CloudWatch configured for team '%s'", request.name)
 
 
 @activity.defn
 async def notify_team(request: TeamRequest) -> None:
+    activity.heartbeat("sending Slack notification")
+    await asyncio.sleep(1)
     payload = {
         "channel": f"#team-{request.name}",
         "text": f":white_check_mark: Landing zone ready! Welcome, {request.name}.",
