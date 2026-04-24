@@ -19,6 +19,8 @@ What they've accumulated to force this into pipelines:
 
 They're building a workflow engine badly. The platform team spends ~40% of their time on onboarding toil.
 
+![Before — FinCo's current onboarding flow](docs/diagrams/Before.png)
+
 ---
 
 ## The approach
@@ -33,6 +35,8 @@ The GitLab pipeline doesn't go away — it becomes the front door that kicks off
 
 **Pipelines shine at:** event-driven triggers, linear run-to-completion jobs, stateless execution.  
 **Pipelines break down at:** long-running async work, multi-day human-in-the-loop, durability across runner failures, cross-step saga compensation, stateful lifecycle management.
+
+![After — onboarding orchestrated by Temporal](docs/diagrams/After.png)
 
 ---
 
@@ -66,6 +70,8 @@ One parent workflow — `LandingZoneWorkflow` — with 9 visible activities in t
 | Updates-with-validation | Security approval gate rejects bad input before any state mutation |
 | Queries | `get_status` + `get_progress` — introspect a live workflow without interrupting it |
 | Saga / compensation | Late-stage failure unwinds prior committed steps in reverse — the hardest thing to do in a pipeline |
+
+![Architecture — runtime topology with trust boundaries (Temporal Cloud)](docs/diagrams/Architecture.png)
 
 ---
 
