@@ -25,13 +25,13 @@ They're building a workflow engine badly. The platform team spends ~40% of their
 
 ## The approach
 
-> *"Terraform is great at declarative desired-state for a bounded scope of resources. But real enterprise provisioning is a multi-step, multi-system, multi-hour (sometimes multi-day) process that spans many TF state files, external systems, human approvals, and failure modes — that's orchestration, not state management, and that's where Temporal fits."*
+Terraform is great at declarative desired-state for a bounded scope of resources. But real enterprise provisioning is a multi-step, multi-system, multi-hour (sometimes multi-day) process that spans many TF state files, external systems, human approvals, and failure modes — that's orchestration, not state management, and that's where Temporal fits.
 
 Terraform still runs the declarative IaC inside activities. Temporal orchestrates *across* them with durable execution, retries, compensation, and human-in-the-loop.
 
 The GitLab pipeline doesn't go away — it becomes the front door that kicks off a Temporal workflow:
 
-> *"Many platform teams start with a GitLab or GitHub pipeline and it works great. The customers I've seen move to Temporal aren't replacing the trigger — it's still often Git-based. They're replacing the orchestration layer once their workflow stops being 'a single linear run' and becomes 'a stateful, long-running process with approvals, resumability, and lifecycle management.'"*
+Many platform teams start with a GitLab or GitHub pipeline and it works great. Adopting Temporal wouldn't replace the trigger — that's still often Git-based. It replaces the **orchestration layer** behind it, once the workflow stops being "a single linear run" and becomes "a stateful, long-running process with approvals, resumability, and lifecycle management."
 
 **Pipelines shine at:** event-driven triggers, linear run-to-completion jobs, stateless execution.  
 **Pipelines break down at:** long-running async work, multi-day human-in-the-loop, durability across runner failures, cross-step saga compensation, stateful lifecycle management.
