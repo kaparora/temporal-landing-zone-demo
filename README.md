@@ -294,4 +294,4 @@ I built this project with Claude as an AI pair-programming assistant. Claude hel
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.

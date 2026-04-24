@@ -92,9 +92,11 @@ async def provision_aws_account(request: TeamRequest) -> AWSAccountResult:
 async def apply_terraform_networking(request: TeamRequest) -> TerraformResult:
     """Runs terraform init → apply against the networking module.
 
-    Uses null + random + local providers so no AWS credentials are required.
-    Heartbeats on every line of terraform output so Temporal can detect
-    worker crashes during a long apply.
+    Provisions real AWS resources (VPC + public subnet + internet gateway
+    + route table) via the hashicorp/aws provider. AWS credentials come
+    from the AWS_PROFILE environment variable inherited from the worker
+    process. Heartbeats on every line of terraform output so Temporal
+    can detect worker crashes during a long apply.
     """
     maybe_inject_failure(request.scenario, "apply_terraform_networking")
 
