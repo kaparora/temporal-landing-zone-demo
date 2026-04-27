@@ -19,7 +19,83 @@ What they've accumulated to force this into pipelines:
 
 They're building a workflow engine badly. The platform team spends ~40% of their time on onboarding toil.
 
-![Before — FinCo's current onboarding flow](docs/diagrams/Before.png)
+```mermaid
+flowchart TB
+    subgraph PT["1 · Product Team"]
+        direction LR
+        PT1[File Jira ticket]
+        PT2[Poll status. Again.]
+    end
+
+    subgraph PIPES["2 · GitLab Pipelines — 3 chained"]
+        direction LR
+        P1[#1: AWS + networking]
+        P2[#2: IAM + SSO]
+        P3[#3: GitHub, Jira, Datadog]
+    end
+
+    subgraph PLUMB["3 · Pipeline plumbing — hacks"]
+        direction LR
+        S3[S3<br/>TF state hand-off]
+        DDB[DynamoDB<br/>step tracker]
+        CRON[Cron job<br/>poll AWS every 5 min]
+    end
+
+    subgraph SEC["4 · Slack approval flow — separate"]
+        direction LR
+        SB[Slack bot]
+        AP[Approval pipeline]
+    end
+
+    subgraph SR["5 · Security Reviewer"]
+        direction LR
+        SR1[Acks in Slack<br/>days later]
+    end
+
+    subgraph PE["6 · Platform Engineer — firefighting"]
+        direction LR
+        RB[40-page runbook]
+        FF[Manual recovery]
+    end
+
+    subgraph AWS["7 · AWS"]
+        direction LR
+        A1[AWS account]
+        A2[VPC + subnet + IGW]
+        ORPH[🧟 Orphaned resources<br/>from failed runs]
+    end
+
+    subgraph EXT["8 · External Systems"]
+        direction LR
+        E1[GitHub repo]
+        E2[Jira project]
+        E3[Datadog + CloudWatch]
+    end
+
+    PT1 --> P1
+    P1 -.-> S3
+    P1 --> A1
+    CRON -. "polls" .-> A1
+    P1 -. "blocks until<br/>cron confirms" .-> P2
+    P1 -. "requests approval" .-> SB
+    SB --> AP
+    AP -. "notifies" .-> SR1
+    SR1 -. "approve" .-> AP
+    AP -. "unblock" .-> P2
+    P2 -.-> S3
+    P2 -.-> DDB
+    P2 --> A2
+    P3 -.-> DDB
+    P3 --> E1
+    P3 --> E2
+    P3 --> E3
+    P1 -. "fails ~20%" .-> RB
+    P2 -. "fails" .-> RB
+    P3 -. "fails" .-> RB
+    RB --> FF
+    FF -. "misses cleanup" .-> ORPH
+    PT2 -. "is it done?" .-> DDB
+```
 
 ---
 
@@ -36,7 +112,57 @@ Many platform teams start with a GitLab or GitHub pipeline and it works great. A
 **Pipelines shine at:** event-driven triggers, linear run-to-completion jobs, stateless execution.  
 **Pipelines break down at:** long-running async work, multi-day human-in-the-loop, durability across runner failures, cross-step saga compensation, stateful lifecycle management.
 
-![After — onboarding orchestrated by Temporal](docs/diagrams/After.png)
+```mermaid
+flowchart TB
+    subgraph PT["1 · Product Team"]
+        direction LR
+        PT1[Commit team_phoenix.yaml]
+        PT2[Team onboarded ✓]
+    end
+
+    subgraph GL["2 · GitLab Pipeline — front door"]
+        direction LR
+        GL1[Start Temporal workflow]
+    end
+
+    subgraph TW["3 · Temporal Workflow — durable orchestrator"]
+        direction LR
+        TW1[Validate request] --> TW2[Await security approval]
+        TW2 --> TW3[Provision AWS account]
+        TW3 --> TW4[Terraform: networking + IAM]
+        TW4 --> TW5[Register GitHub + Jira]
+        TW5 --> TW6[Bootstrap observability]
+        TW6 --> TW7[Notify team]
+    end
+
+    subgraph SR["4 · Security Reviewer — human"]
+        direction LR
+        SR1[Review & approve with reason]
+    end
+
+    subgraph AWS["5 · AWS"]
+        direction LR
+        A1[AWS account]
+        A2[VPC + subnet + IGW]
+    end
+
+    subgraph EXT["6 · External Systems"]
+        direction LR
+        E1[GitHub repo]
+        E2[Jira project]
+        E3[Datadog + CloudWatch]
+    end
+
+    PT1 --> GL1 --> TW1
+    TW2 -. "notify" .-> SR1
+    SR1 -. "approve with reason" .-> TW2
+    TW3 --> A1
+    TW4 --> A2
+    TW5 --> E1
+    TW5 --> E2
+    TW6 --> E3
+    TW7 --> PT2
+```
 
 ---
 
@@ -71,7 +197,60 @@ One parent workflow — `LandingZoneWorkflow` — with 9 visible activities in t
 | Queries | `get_status` + `get_progress` — introspect a live workflow without interrupting it |
 | Saga / compensation | Late-stage failure unwinds prior committed steps in reverse — the hardest thing to do in a pipeline |
 
-![Architecture — runtime topology with trust boundaries (Temporal Cloud)](docs/diagrams/Architecture.png)
+```mermaid
+flowchart TB
+    subgraph HUMANS[" "]
+        direction LR
+        PT[👤 Product team]
+        SR[👤 Security reviewer]
+        PE[👤 Platform engineer]
+    end
+
+    subgraph CUSTOMER["🏢 FinCo network — customer's AWS / VPC"]
+        direction TB
+        subgraph CLIENTS[" "]
+            direction LR
+            GL[GitLab runner<br/>front-door trigger]
+            CLI[CLI: approve.py]
+        end
+
+        WORKERS[⚙️ Temporal Worker pool<br/><br/>runs LandingZoneWorkflow<br/>+ all activities<br/><br/>scales horizontally]
+
+        TFSTATE[(Terraform state<br/>S3 backend)]
+        TARGETS[🎯 Target AWS resources<br/>new accounts, VPCs, IAM, etc.]
+    end
+
+    subgraph CLOUD["☁️ Temporal Cloud — control plane"]
+        direction LR
+        SERVER[Temporal Server<br/>Frontend · History · Matching<br/>+ Temporal-managed persistence]
+        UI[Temporal Cloud UI<br/>observability]
+    end
+
+    subgraph EXTERNAL["🌐 External SaaS APIs"]
+        direction LR
+        GH[GitHub API]
+        JIRA[Jira API]
+        DD[Datadog]
+        SLACK[Slack]
+    end
+
+    PT --> GL
+    SR --> CLI
+    PE -. "observe" .-> UI
+    PT -. "observe" .-> UI
+
+    GL -. "start workflow" .-> SERVER
+    CLI -. "Update: approval" .-> SERVER
+
+    WORKERS <==> |"poll tasks · stream completions<br/>ONLY workflow history crosses this line<br/>mTLS or API-key auth"| SERVER
+
+    WORKERS --> TARGETS
+    WORKERS --> TFSTATE
+    WORKERS --> GH
+    WORKERS --> JIRA
+    WORKERS --> DD
+    WORKERS --> SLACK
+```
 
 ---
 
