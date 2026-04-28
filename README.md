@@ -467,6 +467,7 @@ No code changes required.
 - **Real AWS account provisioning** — replace the simulated 18s heartbeat loop in `provision_aws_account` with an actual `organizations:CreateAccount` call. This is the textbook async-long-running AWS API use case for Temporal (creation is async and takes 5-15 min).
 - **Dedicated teardown workflow** — a `LandingZoneTeardownWorkflow` that reuses the compensation activities for explicit team decommissioning (approval-gated, multi-day grace periods, etc.). Today the shell script `07_cleanup.sh` handles this with `terraform destroy` — fine for operational hygiene, but a workflow is the right fit for the enterprise "sunset a team" use case.
 - **Approval notifications and user verification** — currently the approval gate validates state and input only, not approver identity. Real implementation needs: (1) notification channel (Slack, email, ServiceNow), (2) user authentication (Temporal API keys with RBAC, JWT verification, or pre-authenticated service). Temporal Cloud provides RBAC; self-hosted deployments would add JWT verification in the Update validator.
+- **Approval SLA timeout** — the `wait_condition` currently waits indefinitely. In production this is a business policy decision: auto-deny after a defined SLA (e.g. 7 days) or escalate to a manager. For a regulated financial services firm, an unanswered security approval is itself a compliance risk — the timeout handler becomes policy, not just an error case.
 
 ## Development
 
